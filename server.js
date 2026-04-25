@@ -20,31 +20,37 @@ app.use('/api/forms', formRoutes);
 app.use('/api/submissions', submissionRoutes);
 
 // MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
+let MONGODB_URI = (process.env.MONGODB_URI || process.env.MONGO_URI || "").trim();
+
+console.log("System Check: NODE_ENV =", process.env.NODE_ENV);
+console.log("System Check: URI Length =", MONGODB_URI.length);
 
 let dbStatus = "Not Started";
 let dbError = null;
 
 if (MONGODB_URI) {
   dbStatus = "Connecting...";
-  // Added dbName to ensure it doesn't default to 'test' which might have different permissions
+  console.log("Attempting database connection...");
+  
   mongoose.connect(MONGODB_URI, {
     dbName: 'incubator',
-    serverSelectionTimeoutMS: 5000,
+    serverSelectionTimeoutMS: 10000, // Increased to 10s for slow Vercel cold starts
     socketTimeoutMS: 45000,
   })
     .then(() => {
       dbStatus = "Connected";
       dbError = null;
+      console.log("SUCCESS: MongoDB Connected");
     })
     .catch((err) => {
       dbStatus = "Failed";
       dbError = err.message;
-      console.error("MongoDB Connection Error:", err.message);
+      console.error("CRITICAL ERROR: MongoDB Connection Failed ->", err.message);
     });
 } else {
   dbStatus = "Configuration Error";
-  dbError = "MONGODB_URI environment variable is missing on Vercel!";
+  dbError = "MONGODB_URI environment variable is missing on Vercel Dashboard!";
+  console.error("CRITICAL ERROR: No MONGODB_URI found in environment.");
 }
 
 // Root route for health check
