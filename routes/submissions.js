@@ -38,7 +38,13 @@ router.post('/submit', async (req, res) => {
     }
 
     const now = new Date();
-    const submissionTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const submissionTime = now.toLocaleTimeString('en-US', { 
+      timeZone: 'Asia/Dhaka', 
+      hour: '2-digit', 
+      minute: '2-digit', 
+      second: '2-digit', 
+      hour12: true 
+    });
 
     const submission = new Submission({
       studentId: student._id,
