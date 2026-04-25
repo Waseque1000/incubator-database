@@ -20,16 +20,17 @@ app.use('/api/forms', formRoutes);
 app.use('/api/submissions', submissionRoutes);
 
 // MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI || process.env.MONGO_URI;
 
 let dbStatus = "Not Started";
 let dbError = null;
 
 if (MONGODB_URI) {
   dbStatus = "Connecting...";
-  // Added options for better stability on Serverless environments
+  // Added dbName to ensure it doesn't default to 'test' which might have different permissions
   mongoose.connect(MONGODB_URI, {
-    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+    dbName: 'incubator',
+    serverSelectionTimeoutMS: 5000,
     socketTimeoutMS: 45000,
   })
     .then(() => {
