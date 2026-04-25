@@ -20,24 +20,45 @@ app.use('/api/forms', formRoutes);
 app.use('/api/submissions', submissionRoutes);
 
 // MongoDB connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/student-tasks';
+const MONGODB_URI = process.env.MONGODB_URI;
+
+let dbStatus = "Not Started";
 let dbError = null;
 
-mongoose.connect(MONGODB_URI)
-  .then((conn) => {
-    dbError = null;
+if (MONGODB_URI) {
+  dbStatus = "Connecting...";
+  // Added options for better stability on Serverless environments
+  mongoose.connect(MONGODB_URI, {
+    serverSelectionTimeoutMS: 5000, // Timeout after 5s instead of 30s
+    socketTimeoutMS: 45000,
   })
-  .catch((err) => {
-    dbError = err.message;
-  });
+    .then(() => {
+      dbStatus = "Connected";
+      dbError = null;
+    })
+    .catch((err) => {
+      dbStatus = "Failed";
+      dbError = err.message;
+      console.error("MongoDB Connection Error:", err.message);
+    });
+} else {
+  dbStatus = "Configuration Error";
+  dbError = "MONGODB_URI environment variable is missing on Vercel!";
+}
 
 // Root route for health check
 app.get('/', (req, res) => {
   res.json({ 
     message: 'Incubator API is live!', 
     status: 'healthy', 
-    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-    error: dbError
+    database: dbStatus,
+    error: dbError,
+    envCheck: {
+      hasMongoUri: !!process.env.MONGODB_URI,
+      hasJwtSecret: !!process.env.JWT_SECRET,
+      nodeEnv: process.env.NODE_ENV,
+      uriStart: process.env.MONGODB_URI ? process.env.MONGODB_URI.substring(0, 15) + "..." : "none"
+    }
   });
 });
 
