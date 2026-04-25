@@ -90,4 +90,22 @@ router.delete('/:id', auth, async (req, res) => {
   }
 });
 
+// Update enrollment list (Admin)
+router.put('/enrollment/:id', auth, async (req, res) => {
+  try {
+    const { emails } = req.body;
+    if (!emails || !Array.isArray(emails)) {
+      return res.status(400).json({ message: 'Invalid email list' });
+    }
+    const form = await Form.findByIdAndUpdate(
+      req.params.id, 
+      { enrolledEmails: emails }, 
+      { new: true }
+    );
+    res.json(form);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

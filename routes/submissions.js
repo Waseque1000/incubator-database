@@ -264,4 +264,35 @@ router.get('/rewards/:formId', auth, async (req, res) => {
   }
 });
 
+// Admin check list of emails against submissions
+router.post('/check-emails/:formId', auth, async (req, res) => {
+  try {
+    const { emails } = req.body; // Array of emails from CSV
+    if (!emails || !Array.isArray(emails)) {
+      return res.status(400).json({ message: 'Invalid email list' });
+    }
+
+    const formId = new mongoose.Types.ObjectId(req.params.formId);
+
+    // Find all students who HAVE submitted for this form and are in our email list
+    const submissions = await Submission.find({ formId })
+      .populate('studentId')
+      .lean();
+
+    const submittedEmails = new Set(submissions.map(s => s.studentId.email.toLowerCase()));
+
+    const results = emails.map(email => {
+      const normalizedEmail = email.trim().toLowerCase();
+      return {
+        email: normalizedEmail,
+        hasSubmitted: submittedEmails.has(normalizedEmail)
+      };
+    });
+
+    res.json(results);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

@@ -11,7 +11,8 @@ const formSchema = new mongoose.Schema({
     type: { type: String, enum: ['text', 'textarea', 'number'], default: 'text' },
     placeholder: String,
     required: { type: Boolean, default: false }
-  }]
+  }],
+  enrolledEmails: [{ type: String }] // Master list of emails for enrollment check
 }, { timestamps: true });
 
 module.exports = mongoose.model('Form', formSchema);
