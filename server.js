@@ -23,12 +23,15 @@ app.use('/api/submissions', submissionRoutes);
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/student-tasks';
 let dbError = null;
 
+console.log('🔌 Connecting to MongoDB:', MONGODB_URI.substring(0, 20) + '...');
 mongoose.connect(MONGODB_URI)
-  .then((conn) => {
+  .then(() => {
     dbError = null;
+    console.log('✅ MongoDB Connected Successfully!');
   })
   .catch((err) => {
     dbError = err.message;
+    console.error('❌ MongoDB FAILED:', err.message);
   });
 
 // Root route for health check
