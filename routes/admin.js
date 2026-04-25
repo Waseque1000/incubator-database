@@ -36,4 +36,29 @@ router.get('/me', auth, async (req, res) => {
   }
 });
 
+// Get all admins (Admin)
+router.get('/all', auth, async (req, res) => {
+  try {
+    const admins = await Admin.find().select('-password').sort({ createdAt: -1 });
+    res.json(admins);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
+// Add new admin (Admin)
+router.post('/add', auth, async (req, res) => {
+  const { name, email, password } = req.body;
+  try {
+    const existing = await Admin.findOne({ email });
+    if (existing) return res.status(400).json({ message: 'Admin with this email already exists' });
+
+    const admin = new Admin({ name, email, password });
+    await admin.save();
+    res.status(201).json({ message: 'Admin added successfully', admin: { name: admin.name, email: admin.email } });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+});
+
 module.exports = router;

@@ -12,7 +12,8 @@ const formSchema = new mongoose.Schema({
     placeholder: String,
     required: { type: Boolean, default: false }
   }],
-  enrolledEmails: [{ type: String }] // Master list of emails for enrollment check
+  enrolledEmails: [{ type: String }], // Master list of emails for enrollment check
+  createdBy: { type: String } // Name of the admin who created the form
 }, { timestamps: true });
 
 module.exports = mongoose.model('Form', formSchema);

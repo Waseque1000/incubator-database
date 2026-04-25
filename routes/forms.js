@@ -2,6 +2,7 @@ const express = require('express');
 const Form = require('../models/Form');
 const Student = require('../models/Student');
 const Submission = require('../models/Submission');
+const Admin = require('../models/Admin');
 const auth = require('../middleware/auth');
 const router = express.Router();
 
@@ -35,8 +36,24 @@ router.get('/', auth, async (req, res) => {
 // Create new form (Admin)
 router.post('/create', auth, async (req, res) => {
   try {
-    const { formName, formSlug, startDate, endDate, customFields } = req.body;
-    const form = new Form({ formName, formSlug, startDate, endDate, customFields });
+    const { formName, formSlug, startDate, endDate, createdBy, customFields } = req.body;
+    
+    // Fetch current admin name if not provided in body
+    let finalAdminName = createdBy;
+    if (!finalAdminName) {
+      const currentAdmin = await Admin.findById(req.admin._id);
+      finalAdminName = currentAdmin ? currentAdmin.name : 'Administrator';
+    }
+    console.log(`📝 Creating form by admin: ${finalAdminName} (ID: ${req.admin._id})`);
+    
+    const form = new Form({ 
+      formName, 
+      formSlug, 
+      startDate, 
+      endDate, 
+      customFields,
+      createdBy: finalAdminName
+    });
     await form.save();
     res.status(201).json(form);
   } catch (err) {
