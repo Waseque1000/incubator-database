@@ -18,22 +18,27 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/forms', formRoutes);
 app.use('/api/submissions', submissionRoutes);
 
-// Root route for health check
-app.get('/', (req, res) => {
-  res.json({ message: 'Incubator API is live!', status: 'healthy', database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' });
-});
-
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/student-tasks';
+let dbError = null;
 
 mongoose.connect(MONGODB_URI)
   .then((conn) => {
-    console.log(`🚀 MongoDB Connected: ${conn.connection.host}`);
-    console.log(`📂 Database: ${conn.connection.name}`);
+    dbError = null;
   })
   .catch((err) => {
-    console.error('❌ MongoDB connection error:', err.message);
+    dbError = err.message;
   });
+
+// Root route for health check
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Incubator API is live!', 
+    status: 'healthy', 
+    database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+    error: dbError
+  });
+});
 
 const PORT = process.env.PORT || 5000;
 if (process.env.NODE_ENV !== 'production') {
