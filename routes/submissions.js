@@ -38,6 +38,9 @@ router.post('/submit', async (req, res) => {
     }
 
     const now = new Date();
+    // Calculate date in Bangladesh Time (YYYY-MM-DD)
+    const bangladeshDate = now.toLocaleDateString('sv-SE', { timeZone: 'Asia/Dhaka' });
+    
     const submissionTime = now.toLocaleTimeString('en-US', { 
       timeZone: 'Asia/Dhaka', 
       hour: '2-digit', 
@@ -49,7 +52,7 @@ router.post('/submit', async (req, res) => {
     const submission = new Submission({
       studentId: student._id,
       formId,
-      date,
+      date: bangladeshDate,
       submissionTime,
       currentModule,
       assignedModule,
@@ -59,6 +62,59 @@ router.post('/submit', async (req, res) => {
     });
 
     await submission.save();
+
+    // --- Discord Notification Integration ---
+    const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
+    if (DISCORD_WEBHOOK_URL) {
+      try {
+        const form = await Form.findById(formId);
+        
+        const embed = {
+          title: needGuideline ? '🚨 GUIDELINE HELP REQUESTED 🚨' : '✅ DAILY PROGRESS SUBMITTED',
+          description: `**Form:** ${form?.formName || 'General Campaign'}\n**Status:** ${needGuideline ? 'Requires Attention ⚠️' : 'On Track 💎'}`,
+          color: needGuideline ? 0xEF4444 : 0x10B981,
+          thumbnail: { url: 'https://cdn-icons-png.flaticon.com/512/3062/3062634.png' },
+          fields: [
+            { name: '👤 Student Identity', value: `**Name:** ${name}\n**Email:** ${email}\n**Batch:** ${batch || 'N/A'}`, inline: false },
+            { name: '📊 Progress Details', value: `**Current Module:** ${currentModule}\n**Submission Time:** ${submissionTime}`, inline: false },
+            { name: '🎯 Tomorrow\'s Mission', value: tomorrowTask || '_No plan provided_', inline: false },
+          ],
+          timestamp: new Date().toISOString(),
+          footer: { 
+            text: 'Incubator Management System • Built with Antigravity',
+            icon_url: 'https://cdn-icons-png.flaticon.com/512/5968/5968292.png'
+          }
+        };
+
+        if (customData && Object.keys(customData).length > 0) {
+          let customFieldsText = Object.entries(customData)
+            .map(([key, val]) => `🔹 **${key}:** ${val}`)
+            .join('\n');
+          embed.fields.push({ name: '📋 Additional Info', value: customFieldsText });
+        }
+
+        console.log(`📡 Sending professional Discord notification...`);
+        const response = await fetch(DISCORD_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: 'Incubator Bot',
+            avatar_url: 'https://cdn-icons-png.flaticon.com/512/1782/1782803.png',
+            embeds: [embed]
+          })
+        });
+
+        if (response.ok) {
+          console.log('✅ Discord notification sent successfully!');
+        } else {
+          const errorData = await response.text();
+          console.error(`❌ Discord Webhook Failed: ${response.status} ${response.statusText}`, errorData);
+        }
+      } catch (discordErr) {
+        console.error('❌ Discord Webhook Error:', discordErr.message);
+      }
+    }
+
     res.status(201).json(submission);
   } catch (err) {
     if (err.code === 11000) {
