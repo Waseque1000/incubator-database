@@ -37,10 +37,14 @@ router.post('/submit', async (req, res) => {
       await student.save();
     }
 
+    const now = new Date();
+    const submissionTime = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
     const submission = new Submission({
       studentId: student._id,
       formId,
       date,
+      submissionTime,
       currentModule,
       assignedModule,
       tomorrowTask,

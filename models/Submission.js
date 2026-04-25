@@ -4,6 +4,7 @@ const submissionSchema = new mongoose.Schema({
   studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Student', required: true },
   formId: { type: mongoose.Schema.Types.ObjectId, ref: 'Form', required: true },
   date: { type: String, required: true }, // Format: YYYY-MM-DD
+  submissionTime: { type: String, required: true }, // Format: HH:mm:ss
   currentModule: { type: String, required: true },
   assignedModule: { type: String, required: true },
   tomorrowTask: { type: String, required: true },
