@@ -2,7 +2,39 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const Admin = require('../models/Admin');
 const auth = require('../middleware/auth');
+const admin = require('firebase-admin');
 const router = express.Router();
+
+router.post('/firebase-login', async (req, res) => {
+  const { idToken } = req.body;
+  try {
+    // Verify the Firebase ID Token
+    const decodedToken = await admin.auth().verifyIdToken(idToken);
+    const { email, name, uid } = decodedToken;
+
+    // Find or create admin in MongoDB
+    let mongoAdmin = await Admin.findOne({ email });
+    if (!mongoAdmin) {
+      mongoAdmin = new Admin({ 
+        name: name || 'Admin', 
+        email, 
+        password: 'firebase-auth-' + uid // Placeholder password
+      });
+      await mongoAdmin.save();
+    }
+
+    // Issue a custom JWT for our app's existing auth system
+    const token = jwt.sign({ _id: mongoAdmin._id }, process.env.JWT_SECRET || 'supersecret', { expiresIn: '1d' });
+    
+    res.json({ 
+      token, 
+      admin: { name: mongoAdmin.name, email: mongoAdmin.email } 
+    });
+  } catch (err) {
+    console.error('Firebase Login Error:', err.message);
+    res.status(401).json({ message: 'Authentication failed' });
+  }
+});
 
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;

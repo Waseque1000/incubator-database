@@ -2,6 +2,16 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const admin = require('firebase-admin');
+
+// Initialize Firebase Admin
+// If you have a serviceAccountKey.json, you should use it here.
+// For now, we'll try to initialize with the project ID.
+if (!admin.apps.length) {
+  admin.initializeApp({
+    projectId: 'incubator-2977e'
+  });
+}
 
 const adminRoutes = require('./routes/admin');
 const formRoutes = require('./routes/forms');
