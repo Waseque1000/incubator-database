@@ -18,6 +18,11 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/forms', formRoutes);
 app.use('/api/submissions', submissionRoutes);
 
+// Root route for health check
+app.get('/', (req, res) => {
+  res.json({ message: 'Incubator API is live!', status: 'healthy', database: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected' });
+});
+
 // MongoDB connection
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://127.0.0.1:27017/student-tasks';
 
